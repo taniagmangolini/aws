@@ -1,7 +1,7 @@
 import json
 import boto3 
 import botocore
-import pandas as pd # python -m pip install numpy
+import pandas  # python -m pip install numpy
 import wikipedia
 from io import StringIO
 import logging
@@ -62,8 +62,8 @@ def delete_sqs_msg(queue_name, receipt_handle):
 
 def names_to_wikipedia(names):
     '''Get summaries from Wikipedia.'''
-    wikipedia_snippit = [wikipedia.summary(name, sentences=[]) for name in names]
-    df = pd.Dataframe(
+    wikipedia_snippit = [wikipedia.summary(name, auto_suggest=False) for name in names]
+    df = pandas.Dataframe(
         {
             'names': names,
             'wikipedia_snippit': wikipedia_snippit
@@ -103,7 +103,8 @@ def lambda_handler(event, context):
     event_source_arn = event['Records'][0]['eventSourceARN']
     names = [] # captured from Queue
     for record in event['Records']:
-        company_name = record['body']
+        body = json.loads(record['body'])
+        company_name = body['guid']
         
         #Capture for processing and delete from the queue
         names.append(company_name)
