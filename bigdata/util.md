@@ -6,7 +6,7 @@
  https://repost.aws/knowledge-center/lambda-import-module-error-python
  
 
-# Create a Lambda Layers:
+# Create a Lambda Layer:
 
 ```
 mkdir python
