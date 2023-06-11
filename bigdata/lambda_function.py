@@ -3,7 +3,7 @@ import boto3
 import botocore
 import pandas as pd # python -m pip install numpy
 import wikipedia
-from to import StringIO
+from io import StringIO
 import logging
 
 
@@ -49,7 +49,7 @@ def delete_sqs_msg(queue_name, receipt_handle):
     '''Removes msg from a queue.'''
     try:
         sqs_client = sqs_connection()
-        queue_url = sqs_client.get_queue_url(QueueName=queue_name)['QueueName']
+        queue_url = sqs_client.get_queue_url(QueueName=queue_name)['QueueUrl']
         delete_log_msg = 'Deleting msg with ReceiptHandle %s'% receipt_handle
         LOG.info(delete_log_msg)
         response = sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
@@ -103,12 +103,11 @@ def lambda_handler(event, context):
     event_source_arn = event['Records'][0]['eventSourceARN']
     names = [] # captured from Queue
     for record in event['Records']:
-        body = json.loads(record['body'])
-        company_name = body['name']
+        company_name = record['body']
         
         #Capture for processing and delete from the queue
         names.append(company_name)
-        extra_logging = {'body': body, 'company_name': company_name}
+        extra_logging = {'company_name': company_name}
         LOG.info(f'SQS CONSUMER, splitting sqs arn with value {event_source_arn}')
         qname = event_source_arn.split(':')[-1]
         extra_logging['queue'] = qname
@@ -123,4 +122,4 @@ def lambda_handler(event, context):
     df = apply_sentiment(df)
     LOG.info(f'Sentiments for the companies {df.to_dict()}')
     
-    write_s3(df=df, bucket='sentiment_analysis_results')
+    write_s3(df=df, bucket='big-data-sentiment-analysis')
