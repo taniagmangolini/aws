@@ -1,10 +1,12 @@
 import json
 import boto3 
 import botocore
-import pandas  # python -m pip install numpy
 import wikipedia
 from io import StringIO
 import logging
+import awswrangler as wr
+import pandas as pd
+from datetime import date
 
 
 LOG = logging.getLogger()
@@ -63,12 +65,10 @@ def delete_sqs_msg(queue_name, receipt_handle):
 def names_to_wikipedia(names):
     '''Get summaries from Wikipedia.'''
     wikipedia_snippit = [wikipedia.summary(name, auto_suggest=False) for name in names]
-    df = pandas.Dataframe(
-        {
-            'names': names,
-            'wikipedia_snippit': wikipedia_snippit
-        }
-    )
+    df = pd.DataFrame({
+        'names': names,
+        'wikipedia_snippit': wikipedia_snippit
+    })
     return df
 
 
@@ -76,9 +76,15 @@ def create_sentiment(row):
     '''Uses AWS Comprehend to create sentiments on a dataframe.'''
     LOG.info(f'Processing {row}')
     comprehend = boto3.client(service_name='comprehend')
-    payload = comprehend.detect_sentiment(Tex=row, LanguageCode='en')
-    LOG.debug(f'Found Sentiment:', {payload})
-    sentiment = payload['Sentiment']
+    try:
+        payload = comprehend.detect_sentiment(Text=row, LanguageCode='en')
+    except Exception as error:
+        exception_msg = f'[ERROR] detect sentiment: {error}'
+        LOG.exception(exception_msg)
+        payload = None
+        
+    LOG.debug(f'Found Sentiment: {payload}')
+    sentiment = payload['Sentiment'] if payload else ''
     return sentiment
  
  

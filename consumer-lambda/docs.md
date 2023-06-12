@@ -20,3 +20,8 @@ aws lambda publish-layer-version --layer-name pandas --zip-file fileb://my_layer
 # Public Layers (https://github.com/keithrozario/Klayers)
 
 arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-numpy:9
+
+
+# AWS Layers
+
+https://aws-sdk-pandas.readthedocs.io/en/stable/tutorials.html
