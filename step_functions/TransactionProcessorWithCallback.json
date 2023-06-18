@@ -1,0 +1,52 @@
+{
+  "Comment": "Transaction Processor",
+  "StartAt": "AddToTransactionHistory",
+  "States": {
+    "AddToTransactionHistory": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "transaction_history",
+        "Item": {
+          "TransactionId": {
+            "S.$": "$.TransactionId"
+          },
+          "TransactionType": {
+            "S.$": "$.TransactionType"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2
+        }
+      ],
+      "ResultPath": "$.taskresult",
+      "Next": "BroadcastToSQS"
+    },
+    "BroadcastToSQS": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sqs:sendMessage.waitForTaskToken",
+      "Parameters": {
+        "QueueUrl": "https://sqs.sa-east-1.amazonaws.com/11111/myqueue",
+        "MessageBody": {
+          "taskToken.$": "$$.Task.Token",
+          "TransactionId": "$.TransactionId",
+          "TransactionType": "$.TransactionType"
+        }
+      },
+      "ResultPath": "$.SQS",
+      "Next": "ProcessPurchase"
+    },
+    "ProcessPurchase": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:sa-east-1:11111:function:process_purchase",
+      "ResultPath": "$.taskresult",
+      "End": true
+    }
+  }
+}
